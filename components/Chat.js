@@ -1,5 +1,5 @@
 // Importing dependencies
-import React from "react";
+import React, { Component } from "react";
 import {
   StyleSheet,
   View,
@@ -10,13 +10,41 @@ import {
 } from "react-native";
 import { GiftedChat, Bubble } from "react-native-gifted-chat";
 
-export default class Chat extends React.Component {
-  constructor(props) {
-    super(props);
+//Importing Firebase
+const firebase = require("firebase");
+require("firebase/firestore");
+
+export default class Chat extends Component {
+  constructor() {
+    super();
+
+    // referencing the firestore database
+    if (!firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey: "AIzaSyCgmE_qXoYtZvqfXTN4Tktbl1m4mzip6mA",
+        authDomain: "chatapp-a7858.firebaseapp.com",
+        projectId: "chatapp-a7858",
+        storageBucket: "chatapp-a7858.appspot.com",
+        messagingSenderId: "18512970665",
+        appId: "1:18512970665:web:637eb433c9d1e2d4a77ab8",
+      });
+    }
+
+    // referencing the "messages" collection of the database
+    this.referenceMessages = firebase.firestore().collection("messages");
+
+    // initializing state for message and user + user ID
     this.state = {
       messages: [],
+      user: {
+        _id: "",
+        name: "",
+        avatar: "",
+      },
+      uid: 0,
     };
   }
+
   //this will put the users name in navigation bar
   static navigationOptions = ({ navigation }) => {
     return {
@@ -24,44 +52,70 @@ export default class Chat extends React.Component {
     };
   };
 
-  //Testing app with static messages
   componentDidMount() {
-    this.setState({
-      messages: [
-        {
-          _id: 1,
-          text: "Hello developer",
-          createdAt: new Date(),
-          user: {
-            _id: 2,
-            name: "React Native",
-            avatar: "https://placeimg.com/140/140/any",
-          },
-        },
+    // Authorization using Firebase
+    this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
+      if (!user) {
+        user = await firebase.auth().signInAnonymously();
+      }
+      this.setState({
+        uid: user.uid,
+      });
+      // Fixes the order of messages
+      this.unsubscribe = this.referenceMessages
+        .orderBy("createdAt", "desc")
+        .onSnapshot(this.onCollectionUpdate);
+    });
+  }
 
-        {
-          _id: 3,
-          text: "Hello, chat!",
-          createdAt: new Date(),
-          user: {
-            _id: 1,
-            name: this.props.route.params.userName,
-          },
+  // Stop listening to authentication and collection changes
+  componentWillUnmount() {
+    this.authUnsubscribe();
+  }
+
+  // Writes chat messages to state messages
+  onCollectionUpdate = (querySnapshot) => {
+    const messages = [];
+    querySnapshot.forEach((doc) => {
+      var data = doc.data();
+      messages.push({
+        _id: data._id,
+        text: data.text.toString(),
+        createdAt: data.createdAt.toDate(),
+        user: {
+          _id: data.user._id,
+          name: data.user.name,
+          avatar: data.user.avatar,
         },
-        {
-          _id: 2,
-          text: this.props.route.params.userName + " has joined the chat",
-          createdAt: new Date(),
-          system: true,
-        },
-      ],
+      });
+    });
+    this.setState({
+      messages,
+    });
+  };
+
+  // Adding the message object to the collection
+  addMessage() {
+    this.referenceMessages.add({
+      _id: this.state.messages[0]._id,
+      text: this.state.messages[0].text,
+      createdAt: this.state.messages[0].createdAt,
+      user: this.state.messages[0].user,
+      uid: this.state.uid,
     });
   }
 
   onSend(messages = []) {
-    this.setState((previousState) => ({
-      messages: GiftedChat.append(previousState.messages, messages),
-    }));
+    // "previousState" references the component's state at the time the change is applied
+    this.setState(
+      (previousState) => ({
+        // Appends the new messages to the messages object/state
+        messages: GiftedChat.append(previousState.messages, messages),
+      }),
+      () => {
+        this.addMessage();
+      }
+    );
   }
 
   //Changing the color of the chat
