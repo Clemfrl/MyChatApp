@@ -7,11 +7,14 @@ import {
   Platform,
   KeyboardAvoidingView,
   Button,
+  YellowBox,
 } from "react-native";
 import { GiftedChat, Bubble, InputToolbar } from "react-native-gifted-chat";
 // NetInfo checks user's network status
 import NetInfo from "@react-native-community/netinfo";
 import AsyncStorage from "@react-native-community/async-storage";
+import CustomActions from "./CustomActions";
+import MapView from "react-native-maps";
 
 //Importing Firebase
 const firebase = require("firebase");
@@ -36,7 +39,7 @@ export default class Chat extends Component {
     // referencing the "messages" collection of the database
     this.referenceMessages = firebase.firestore().collection("messages");
 
-    // initializing state for message and user + user ID
+    // Initializing state for messages, user, user ID, image and location
     this.state = {
       messages: [],
       user: {
@@ -45,7 +48,61 @@ export default class Chat extends Component {
         avatar: "",
       },
       uid: 0,
+      isConnected: false,
     };
+  }
+
+  // Writes chat messages to state messages
+  onCollectionUpdate = (querySnapshot) => {
+    const messages = [];
+    // Maps through all documents for data
+    querySnapshot.forEach((doc) => {
+      var data = doc.data();
+      messages.push({
+        _id: data._id,
+        text: data.text,
+        createdAt: data.createdAt.toDate(),
+        user: {
+          _id: data.user._id,
+          name: data.user.name,
+          avatar: data.user.avatar,
+        },
+        image: data.image || "",
+        location: data.location || "",
+      });
+    });
+    this.setState({
+      messages,
+    });
+  };
+
+  // Adding the message object to the collection
+  addMessages() {
+    const message = this.state.messages[0];
+    this.referenceMessages.add({
+      _id: message._id,
+      text: message.text || "",
+      createdAt: message.createdAt,
+      user: message.user,
+      uid: this.state.uid,
+      image: message.image || "",
+      location: message.location || "",
+    });
+  }
+
+  // Function called upon sending a message
+  onSend(messages = []) {
+    // "previousState" references the component's state at the time the change is applied
+    this.setState(
+      (previousState) => ({
+        // Appends the new messages to the messages object/state
+        messages: GiftedChat.append(previousState.messages, messages),
+      }),
+      () => {
+        this.addMessage();
+        this.saveMessages();
+      }
+    );
   }
 
   //this will put the users name in navigation bar
@@ -90,19 +147,11 @@ export default class Chat extends Component {
   };
 
   componentDidMount() {
-    // Defining variables from SplashScreen
-    let { userName } = this.props.route.params;
-    // Setting default username in case the user didn't enter one
-    if (!userName) userName = "User";
-    // Displaying username on the navbar in place of the title
-    this.props.navigation.setOptions({ title: userName });
-
     NetInfo.fetch().then((state) => {
       if (state.isConnected) {
         this.authUnsubscribe = firebase
           .auth()
           .onAuthStateChanged(async (user) => {
-            // console.log("user is :", user);
             if (!user) {
               try {
                 await firebase.auth().signInAnonymously();
@@ -110,15 +159,15 @@ export default class Chat extends Component {
                 console.log(error.message);
               }
             }
-            // console.log("props: ", this.props);
+            //console.log("props: ", this.props);
             this.setState({
               isConnected: true,
               user: {
                 _id: user.uid,
-                name: this.props.route.params.userName,
+                name: this.props.route.params.user,
               },
               loggedInText:
-                this.props.route.params.userName + " has entered the chat",
+                this.props.route.params.user + " has entered the chat",
               messages: [],
             });
             this.unsubscribe = this.referenceMessages
@@ -132,44 +181,8 @@ export default class Chat extends Component {
         this.getMessages();
       }
     });
-  }
-
-  // Stop listening to authentication and collection changes
-  componentWillUnmount() {
-    this.authUnsubscribe();
-    this.unsubscribe();
-  }
-
-  // Writes chat messages to state messages
-  onCollectionUpdate = (querySnapshot) => {
-    const messages = [];
-    querySnapshot.forEach((doc) => {
-      var data = doc.data();
-      messages.push({
-        _id: data._id,
-        text: data.text.toString(),
-        createdAt: data.createdAt.toDate(),
-        user: {
-          _id: data.user._id,
-          name: data.user.name,
-          avatar: data.user.avatar,
-        },
-      });
-    });
-    this.setState({
-      messages,
-    });
-  };
-
-  // Adding the message object to the collection
-  addMessages() {
-    this.referenceMessages.add({
-      _id: this.state.messages[0]._id,
-      text: this.state.messages[0].text,
-      createdAt: this.state.messages[0].createdAt,
-      user: this.state.messages[0].user,
-      uid: this.state.uid,
-    });
+    // Resolves timer-related warnings
+    YellowBox.ignoreWarnings(["Setting a timer", "Animated"]);
   }
 
   onSend(messages = []) {
@@ -180,10 +193,10 @@ export default class Chat extends Component {
         messages: GiftedChat.append(previousState.messages, messages),
       }),
       () => {
-        this.addMessages();
         this.saveMessages();
       }
     );
+    this.addMessages();
   }
 
   //Changing the color of the chat
@@ -200,6 +213,11 @@ export default class Chat extends Component {
     );
   }
 
+  // Rendering the "+" button
+  renderCustomActions = (props) => {
+    return <CustomActions {...props} />;
+  };
+
   // Disables InputToolbar if user is offline
   renderInputToolbar = (props) => {
     if (this.state.isConnected === false) {
@@ -208,7 +226,39 @@ export default class Chat extends Component {
     }
   };
 
+  renderCustomView(props) {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
+          region={{
+            latitude: currentMessage.location.latitude,
+            longitude: currentMessage.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        />
+      );
+    }
+    return null;
+  }
+
+  // Stop listening to authentication and collection changes
+  componentWillUnmount() {
+    this.authUnsubscribe();
+    this.unsubscribe();
+  }
+
   render() {
+    // const { messages, uid } = this.state;
+    // Defining variables from SplashScreen
+    let { user } = this.props.route.params;
+    // Setting default username in case the user didn't enter one
+    if (!user || user === "") user = "User";
+    // Displaying username on the navbar in place of the title
+    this.props.navigation.setOptions({ title: user });
+
     // Defining variables from SplashScreen
     let { backgroundColor } = this.props.route.params;
 
@@ -216,14 +266,21 @@ export default class Chat extends Component {
       <View
         style={[styles.chatBackground, { backgroundColor: backgroundColor }]}
       >
+        {this.state.image && (
+          <Image
+            source={{ uri: this.state.image.uri }}
+            style={{ width: 200, height: 200 }}
+          />
+        )}
         <GiftedChat
-          renderInputToolbar={this.renderInputToolbar}
-          renderBubble={this.renderBubble}
+          renderActions={this.renderCustomActions}
+          renderInputToolbar={this.renderInputToolbar.bind(this)}
+          renderBubble={this.renderBubble.bind(this)}
+          renderActions={this.renderCustomActions.bind(this)}
+          renderCustomView={this.renderCustomView}
           messages={this.state.messages}
           onSend={(messages) => this.onSend(messages)}
-          user={{
-            _id: 1,
-          }}
+          user={this.state.user}
         />
         {Platform.OS === "android" ? (
           <KeyboardAvoidingView behavior="height" />

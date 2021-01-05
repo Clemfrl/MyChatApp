@@ -9,8 +9,14 @@ import "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 
+const firebase = require("firebase");
+require("firebase/firestore");
 // Creating the navigator
 const Stack = createStackNavigator();
+
+renderCustomActions = (props) => {
+  return <CustomActions {...props} />;
+};
 
 export default class App extends Component {
   render() {
