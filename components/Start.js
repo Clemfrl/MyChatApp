@@ -23,8 +23,8 @@ const inputIcon = require("../assets/icon1.png");
 const backgroundColorOptions = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
 export default class SplashScreen extends React.Component {
-  constructor(props) {
-    super(props);
+  constructor() {
+    super();
 
     // Initializing the state of the app
     this.state = {
