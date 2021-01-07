@@ -1,3 +1,12 @@
+/* eslint-disable linebreak-style */
+/* eslint-disable no-use-before-define */
+/* eslint-disable react/jsx-boolean-value */
+/* eslint-disable react/jsx-filename-extension */
+/* eslint-disable consistent-return */
+/* eslint-disable react/prop-types */
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable no-console */
+
 // Importing dependencies
 import React, { Component } from "react";
 import PropTypes from "prop-types";
@@ -25,8 +34,26 @@ import MapView from "react-native-maps";
 const firebase = require("firebase");
 require("firebase/firestore");
 
+/**
+ * @class CustomActions
+ * @requires react
+ * @requires prop-types
+ * @requires react-native
+ * @requires expo-permissions
+ * @requires expo-image-picker
+ * @requires expo-location
+ * @requires firebase
+ * @requires firestore
+ */
+
+// Creating the '+' button on the bottom for more actions
 export default class CustomActions extends React.Component {
-  // For choosing a picture from the device's library (camera roll)
+  /**
+   * For choosing a picture from the device's library (camera roll)
+   * Asks user for permission
+   * @async
+   * @function pickImage
+   */
   pickImage = async () => {
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
     // Only grant access if user accepts
@@ -35,7 +62,7 @@ export default class CustomActions extends React.Component {
         const result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: "Images",
         }).catch((error) => console.log(error));
-
+        // Checks if user cancelled
         if (!result.cancelled) {
           const imageUrl = await this.uploadImage(result.uri);
           this.props.onSend({ image: imageUrl });
@@ -47,7 +74,12 @@ export default class CustomActions extends React.Component {
     }
   };
 
-  // For taking a new image with the device's camera
+  /**
+   * For taking a new image with the device's camera
+   * Asks user for permission
+   * @async
+   * @function takePhoto
+   */
   takePhoto = async () => {
     const { status } = await Permissions.askAsync(
       Permissions.CAMERA,
@@ -56,7 +88,7 @@ export default class CustomActions extends React.Component {
     // Only access if user grants permission
     try {
       if (status === "granted") {
-        let result = await ImagePicker.launchCameraAsync({
+        const result = await ImagePicker.launchCameraAsync({
           mediaTypes: "Images",
         }).catch((error) => console.log(error));
 
@@ -70,7 +102,13 @@ export default class CustomActions extends React.Component {
     }
   };
 
-  // For accessing the user's location data
+  /**
+   * For accessing the user's location data
+   * Asks user for permission
+   * @async
+   * @function getLocation
+   */
+
   getLocation = async () => {
     try {
       const { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -90,15 +128,22 @@ export default class CustomActions extends React.Component {
     }
   };
 
-  // Uploads image as blob
+  /**
+   * Uploads image to storage as blob
+   * Manages XMLHttpRequest
+   * Defines respons type
+   * Creates file name
+   * @async
+   * @function uploadImage
+   */
   uploadImage = async (uri) => {
     const blob = await new Promise((resolve, reject) => {
       // New XMLHttpRequest
       const xhr = new XMLHttpRequest();
-      xhr.onload = function () {
+      xhr.onload = () => {
         resolve(xhr.response);
       };
-      xhr.onerror = function (e) {
+      xhr.onerror = (e) => {
         console.log(e);
         reject(new TypeError("Network request failed"));
       };
@@ -109,9 +154,9 @@ export default class CustomActions extends React.Component {
       xhr.send(null);
     });
     // For creating file name
-    let uriParts = uri.split("/");
-    let imageName = uriParts[uriParts.length - 1];
-
+    const uriParts = uri.split("/");
+    const imageName = uriParts[uriParts.length - 1];
+    // Referencing files
     const ref = firebase.storage().ref().child(`${imageName}`);
     const snapshot = await ref.put(blob);
     // Closes connection
@@ -120,7 +165,12 @@ export default class CustomActions extends React.Component {
     return imageUrl;
   };
 
-  // Defining the functionality for the '+' button
+  /**
+   * Defines the functionality for the '+' button
+   * Tapping '+' calls actionSheet
+   * @function onActionPress
+   * @returns {actionSheet} - choose from library/take photo/send location/cancel
+   */
   onActionPress = () => {
     const options = [
       "Choose Image From Library",
@@ -188,6 +238,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
+/**
+ * Creating styling
+ */
 
 CustomActions.contextTypes = {
   actionSheet: PropTypes.func,

@@ -1,3 +1,9 @@
+/* eslint-disable linebreak-style */
+/* eslint-disable react/prop-types */
+/* eslint-disable react/destructuring-assignment */
+/* eslint-disable no-use-before-define */
+/* eslint-disable react/jsx-filename-extension */
+/* eslint-disable linebreak-style */
 // Importing dependencies
 import React from "react";
 import {
@@ -22,6 +28,11 @@ const inputIcon = require("../assets/icon1.png");
 // Array of background colors with HEX codes to choose from
 const backgroundColorOptions = ["#090C08", "#474056", "#8A95A5", "#B9C6AE"];
 
+/**
+ * @class SplashScreen
+ *@requires react
+ *@requires react-native
+ */
 export default class SplashScreen extends React.Component {
   constructor() {
     super();
@@ -29,12 +40,16 @@ export default class SplashScreen extends React.Component {
     // Initializing the state of the app
     this.state = {
       name: "",
-      // Setting a default background color in case the user doesn't select one - can overwrite it by tapping on a color
+      // Setting a default background color in case the user doesn't select one
       backgroundColor: backgroundColorOptions[2],
     };
   }
 
   render() {
+    /**
+     * User can add their name to TextInput
+     * TouchableOpacity sets the Chat background color
+     */
     return (
       // Setting background image to cover the whole screen
       <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
@@ -71,7 +86,7 @@ export default class SplashScreen extends React.Component {
             {/* Displaying background color options (circles) */}
             <View style={styles.backgroundColorOptions}>
               <TouchableOpacity
-                // Changing the background color to this if user taps on it - position: 0 from the array defined above
+                // Changing the background color - position: 0 from the array defined above
                 onPress={() =>
                   this.setState({ backgroundColor: backgroundColorOptions[0] })
                 }
@@ -83,7 +98,7 @@ export default class SplashScreen extends React.Component {
               />
 
               <TouchableOpacity
-                // Changing the background color to this if user taps on it - position: 1 from the array defined above
+                // Changing the background color - position: 1 from the array defined above
                 onPress={() =>
                   this.setState({ backgroundColor: backgroundColorOptions[1] })
                 }
@@ -95,7 +110,7 @@ export default class SplashScreen extends React.Component {
               />
 
               <TouchableOpacity
-                // Changing the background color to this if user taps on it - position: 2 from the array defined above
+                // Changing the background color - position: 2 from the array defined above
                 onPress={() =>
                   this.setState({ backgroundColor: backgroundColorOptions[2] })
                 }
@@ -107,7 +122,7 @@ export default class SplashScreen extends React.Component {
               />
 
               <TouchableOpacity
-                // Changing the background color to this if user taps on it - position: 3 from the array defined above
+                // Changing the background color - position: 3 from the array defined above
                 onPress={() =>
                   this.setState({ backgroundColor: backgroundColorOptions[3] })
                 }
@@ -148,7 +163,10 @@ export default class SplashScreen extends React.Component {
   }
 }
 
-// Creating styling
+/**
+ * Creating styling
+ */
+
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
