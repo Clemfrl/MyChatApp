@@ -11,3 +11,21 @@ web-build/
 
 # macOS
 .DS_Store
+out/fonts/OpenSans-Regular-webfont.woff
+out/fonts/OpenSans-Regular-webfont.svg
+out/fonts/OpenSans-Regular-webfont.eot
+out/fonts/OpenSans-LightItalic-webfont.woff
+out/fonts/OpenSans-LightItalic-webfont.svg
+out/fonts/OpenSans-LightItalic-webfont.eot
+out/fonts/OpenSans-Light-webfont.woff
+out/fonts/OpenSans-Light-webfont.svg
+out/fonts/OpenSans-Light-webfont.eot
+out/fonts/OpenSans-Italic-webfont.woff
+out/fonts/OpenSans-Italic-webfont.svg
+out/fonts/OpenSans-Italic-webfont.eot
+out/fonts/OpenSans-BoldItalic-webfont.woff
+out/fonts/OpenSans-BoldItalic-webfont.svg
+out/fonts/OpenSans-BoldItalic-webfont.eot
+out/fonts/OpenSans-Bold-webfont.woff
+out/fonts/OpenSans-Bold-webfont.svg
+out/fonts/OpenSans-Bold-webfont.eot
